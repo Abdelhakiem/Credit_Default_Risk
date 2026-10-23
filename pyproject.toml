@@ -1,0 +1,32 @@
+[project]
+name = "credit-default-risk"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Abdelhakim Osama", email = "Abd.Osama@scbank.com.eg" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.161.1",
+    "numpy>=2.5.4",
+    "pandas>=3.1.0",
+    "pydantic>=2.14.1",
+    "scikit-learn>=1.9.1",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+credit-default-risk = "credit_default_risk:main"
+
+[build-system]
+requires = ["uv_build>=0.11.29,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "jupyterlab>=4.6.4",
+    "pytest>=9.1.1",
+    "ruff>=0.17.2",
+]
