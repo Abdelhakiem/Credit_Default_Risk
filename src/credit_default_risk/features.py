@@ -1,7 +1,7 @@
 """Build shared feature-engineered train/test tables from the interim splits.
 
 Run with ``python -m credit_default_risk.features`` from an installed environment.
-Model-specific categorical preparation belongs in the modeling stage.
+Model-specific categorical preparation is available for individual frames.
 """
 
 from pathlib import Path
@@ -27,6 +27,39 @@ def engineer_features(
     result = add_application_ratios(result)
     if property_suffix is not None:
         result = select_property_suffix(result, suffix=property_suffix)
+    return result
+
+
+def prepare_catboost_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Return CatBoost predictors with categorical values as strings."""
+    result = df.drop(columns=[ID_COL, TARGET_COL], errors="ignore").copy()
+    categorical_cols = result.select_dtypes(
+        include=["object", "string", "category"]
+    ).columns
+
+    for col in categorical_cols:
+        result[col] = result[col].astype("string").fillna("__MISSING__").astype(object)
+
+    # CatBoost accepts NaN in numeric columns, including former nullable integers.
+    for col in result.select_dtypes(include="number").columns:
+        if isinstance(result[col].dtype, pd.api.extensions.ExtensionDtype):
+            result[col] = result[col].astype("float64")
+
+    return result
+
+
+def prepare_lightgbm_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Return LightGBM predictors with pandas categorical columns."""
+    result = df.drop(columns=[ID_COL, TARGET_COL], errors="ignore").copy()
+    categorical_cols = result.select_dtypes(
+        include=["object", "string", "category"]
+    ).columns
+
+    for col in categorical_cols:
+        result[col] = result[col].astype("category")
+        if result[col].cat.ordered:
+            result[col] = result[col].cat.as_unordered()
+
     return result
 
 

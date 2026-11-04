@@ -5,7 +5,35 @@ import re
 import numpy as np
 import pandas as pd
 
-from .config import ID_COL, ZERO_WHEN_NO_HISTORY
+from .config import (
+    FINAL_SELECTED_COLUMNS,
+    ID_COL,
+    TARGET_COL,
+    ZERO_WHEN_NO_HISTORY,
+)
+
+
+def select_final_features(
+    df: pd.DataFrame,
+    selected_columns: list[str] | None = None,
+) -> pd.DataFrame:
+    """Return the configured model features in their saved column order.
+
+    Extra input columns such as SK_ID_CURR and TARGET are excluded. Raise an
+    error if any selected feature is missing from the input frame.
+    """
+    columns = FINAL_SELECTED_COLUMNS if selected_columns is None else selected_columns
+    if not columns:
+        raise ValueError("selected_columns must contain at least one feature")
+    if ID_COL in columns or TARGET_COL in columns:
+        raise ValueError(f"Selected features must not include {ID_COL} or {TARGET_COL}")
+
+    missing = [column for column in columns if column not in df.columns]
+    if missing:
+        raise ValueError(f"Input frame is missing selected features: {missing}")
+
+    return df.loc[:, columns].copy()
+
 
 def safe_divide(numerator, denominator):
     denominator = denominator.where(denominator > 0)
