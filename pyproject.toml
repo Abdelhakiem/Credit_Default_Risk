@@ -4,13 +4,16 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "Abdelhakim Osama", email = "Abd.Osama@scbank.com.eg" }
+    { name = "Abdelhakim Osama", email = "abdelhakiem.osama150@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "catboost>=1.2.10",
     "fastapi>=0.161.1",
+    "matplotlib>=3.11.2",
     "numpy>=2.5.4",
     "pandas>=3.1.0",
+    "pyarrow>=26.0.0",
     "pydantic>=2.14.1",
     "scikit-learn>=1.9.1",
     "uvicorn>=0.54.0",
@@ -27,6 +30,7 @@ build-backend = "uv_build"
 dev = [
     "ipykernel>=7.4.0",
     "jupyterlab>=4.6.4",
+    "pip>=26.2.2",
     "pytest>=9.1.1",
     "ruff>=0.17.2",
 ]
