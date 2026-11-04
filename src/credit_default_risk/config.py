@@ -7,6 +7,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 INTERIM_DIR = PROJECT_ROOT / "data" / "interim"
 
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+
 ID_COL = "SK_ID_CURR"
 TARGET_COL = "TARGET"
 TEST_SIZE = 0.20

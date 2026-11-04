@@ -7,6 +7,76 @@ import pandas as pd
 
 from .config import ID_COL, ZERO_WHEN_NO_HISTORY
 
+def safe_divide(numerator, denominator):
+    denominator = denominator.where(denominator > 0)
+    return numerator.div(denominator).replace([np.inf, -np.inf], np.nan)
+
+def add_time_features(df):
+    df = df.copy()
+
+    employed_days = df["DAYS_EMPLOYED"].replace(365243, np.nan)
+    df["DAYS_EMPLOYED"] = employed_days
+
+    df["AGE_YEARS"] = -df["DAYS_BIRTH"] / 365.25
+    df["EMPLOYMENT_YEARS"] = -employed_days / 365.25
+
+    df["AGE_BIN"] = pd.cut(
+        df["AGE_YEARS"],
+        bins=[0, 25, 35, 45, 55, 65, np.inf],
+        labels=["<25", "25-34", "35-44", "45-54", "55-64", "65+"],
+        right=False,
+    )
+
+    df["EMPLOYMENT_BIN"] = pd.cut(
+        df["EMPLOYMENT_YEARS"],
+        bins=[0, 1, 3, 5, 10, 20, np.inf],
+        labels=["<1", "1-2", "3-4", "5-9", "10-19", "20+"],
+        right=False,
+    )
+
+    return df
+def add_application_ratios(df):
+    df = df.copy()
+
+    df["CREDIT_TO_INCOME_RATIO"] = safe_divide(
+        df["AMT_CREDIT"], df["AMT_INCOME_TOTAL"]
+    )
+    df["ANNUITY_TO_INCOME_RATIO"] = safe_divide(
+        df["AMT_ANNUITY"], df["AMT_INCOME_TOTAL"]
+    )
+    df["GOODS_TO_CREDIT_RATIO"] = safe_divide(
+        df["AMT_GOODS_PRICE"], df["AMT_CREDIT"]
+    )
+    df["CREDIT_TO_ANNUITY_RATIO"] = safe_divide(
+        df["AMT_CREDIT"], df["AMT_ANNUITY"]
+    )
+    df["INCOME_PER_FAMILY_MEMBER"] = safe_divide(
+        df["AMT_INCOME_TOTAL"], df["CNT_FAM_MEMBERS"]
+    )
+
+    return df
+def select_property_suffix(df, suffix="MEDI"):
+    df = df.copy()
+    property_suffixes = ("AVG", "MEDI", "MODE")
+
+    families = {
+        col.rsplit("_", 1)[0]
+        for col in df.columns
+        if col.endswith(tuple(f"_{s}" for s in property_suffixes))
+        and all(
+            f"{col.rsplit('_', 1)[0]}_{s}" in df.columns
+            for s in property_suffixes
+        )
+    }
+
+    drop_cols = [
+        f"{family}_{s}"
+        for family in families
+        for s in property_suffixes
+        if s != suffix
+    ]
+
+    return df.drop(columns=drop_cols)
 
 def _map_binary(series: pd.Series, mapping: dict[str, int], column: str) -> pd.Series:
     values = series.astype("string").str.strip().str.upper()
