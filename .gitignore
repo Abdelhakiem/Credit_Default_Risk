@@ -9,7 +9,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
-
+.vscode/
 data/raw/*
 !data/raw/.gitkeep
 data/interim/*
@@ -24,3 +24,5 @@ artifacts/*
 mlruns/
 
 references/
+mlflow.db
+mlartifacts/
