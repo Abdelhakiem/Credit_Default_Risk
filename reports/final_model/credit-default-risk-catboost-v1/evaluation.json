@@ -1,0 +1,21 @@
+{
+  "model_name": "credit-default-risk-catboost",
+  "model_version": "1",
+  "model_run_id": "699826b8431a470f804d7bf653fc215e",
+  "evaluation_split": "held-out test",
+  "metrics": {
+    "rows": 61503.0,
+    "observed_default_rate": 0.08072776937710356,
+    "mean_predicted_risk": 0.08004700342824775,
+    "average_precision": 0.27868643179935515,
+    "roc_auc": 0.7828545689863358,
+    "brier_score": 0.06603694424944864,
+    "log_loss": 0.23818172839203505,
+    "fixed_threshold": 0.18452219265686595,
+    "review_rate": 0.09814155407053314,
+    "precision_at_threshold": 0.2992047713717694,
+    "recall_at_threshold": 0.3637462235649547
+  },
+  "calibration_decision": "Sigmoid calibration was investigated on development data and was not adopted for this registered model.",
+  "decision_threshold_source": "top 10% on tuning validation"
+}

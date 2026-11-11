@@ -13,6 +13,42 @@ from .config import (
 )
 
 
+def load_registered_catboost(
+    *,
+    model_name: str = "credit-default-risk-catboost",
+    alias: str = "champion",
+    tracking_uri: str | None = None,
+):
+    """Load a registered CatBoost version and its inference manifest.
+
+    Resolve the alias once, then pin the version so the model and manifest
+    come from the same training run if the alias changes during loading.
+    """
+    import mlflow
+    from mlflow import MlflowClient
+
+    if tracking_uri is not None:
+        mlflow.set_tracking_uri(tracking_uri)
+
+    version = MlflowClient().get_model_version_by_alias(model_name, alias)
+    if not version.run_id:
+        raise ValueError(
+            "Registered model version has no source run ID; "
+            "cannot locate its inference manifest."
+        )
+
+    model = mlflow.catboost.load_model(
+        f"models:/{model_name}/{version.version}"
+    )
+    manifest = mlflow.artifacts.load_dict(
+        f"runs:/{version.run_id}/inference/manifest.json"
+    )
+    if not isinstance(manifest.get("feature_columns"), list):
+        raise ValueError("Inference manifest has no feature_columns list")
+
+    return model, manifest
+
+
 def select_final_features(
     df: pd.DataFrame,
     selected_columns: list[str] | None = None,
