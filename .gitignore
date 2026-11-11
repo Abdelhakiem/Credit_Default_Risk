@@ -26,3 +26,6 @@ mlruns/
 references/
 mlflow.db
 mlartifacts/
+optuna_lgbm.db
+TODO.md
+PLAN.md
