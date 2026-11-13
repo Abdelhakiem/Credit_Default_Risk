@@ -1,2 +1,8 @@
+import logging
+
+from .logging_conf import configure_logging
+
+
 def main() -> None:
-    print("Hello from credit-default-risk!")
+    configure_logging()
+    logging.getLogger(__name__).info("Credit Default Risk command started")

@@ -769,11 +769,8 @@ source = { editable = "." }
 dependencies = [
     { name = "catboost" },
     { name = "fastapi" },
-    { name = "lightgbm" },
-    { name = "matplotlib" },
     { name = "mlflow" },
     { name = "numpy" },
-    { name = "optuna" },
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "pydantic" },
@@ -781,10 +778,13 @@ dependencies = [
     { name = "uvicorn" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "ipykernel" },
     { name = "jupyterlab" },
+    { name = "lightgbm" },
+    { name = "matplotlib" },
+    { name = "optuna" },
     { name = "pip" },
     { name = "pytest" },
     { name = "ruff" },
@@ -794,26 +794,23 @@ dev = [
 requires-dist = [
     { name = "catboost", specifier = ">=1.2.10" },
     { name = "fastapi", specifier = ">=0.161.1" },
-    { name = "lightgbm", specifier = ">=4.7.0" },
-    { name = "matplotlib", specifier = ">=3.11.2" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=7.4.0" },
+    { name = "jupyterlab", marker = "extra == 'dev'", specifier = ">=4.6.4" },
+    { name = "lightgbm", marker = "extra == 'dev'", specifier = ">=4.7.0" },
+    { name = "matplotlib", marker = "extra == 'dev'", specifier = ">=3.11.2" },
     { name = "mlflow", specifier = ">=3.18.0" },
     { name = "numpy", specifier = ">=2.5.4" },
-    { name = "optuna", specifier = ">=5.0.0" },
+    { name = "optuna", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "pandas", specifier = ">=3.1.0" },
+    { name = "pip", marker = "extra == 'dev'", specifier = ">=26.2.2" },
     { name = "pyarrow", specifier = ">=26.0.0" },
     { name = "pydantic", specifier = ">=2.14.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.17.2" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "ipykernel", specifier = ">=7.4.0" },
-    { name = "jupyterlab", specifier = ">=4.6.4" },
-    { name = "pip", specifier = ">=26.2.2" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "ruff", specifier = ">=0.17.2" },
-]
+provides-extras = ["dev"]
 
 [[package]]
 name = "cryptography"

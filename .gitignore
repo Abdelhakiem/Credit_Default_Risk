@@ -29,3 +29,4 @@ mlartifacts/
 optuna_lgbm.db
 TODO.md
 PLAN.md
+Agent.md
