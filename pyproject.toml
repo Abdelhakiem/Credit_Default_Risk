@@ -10,14 +10,12 @@ requires-python = ">=3.12"
 dependencies = [
     "catboost>=1.2.10",
     "fastapi>=0.161.1",
-    "lightgbm>=4.7.0",
-    "matplotlib>=3.11.2",
     "mlflow>=3.18.0",
     "numpy>=2.5.4",
-    "optuna>=5.0.0",
     "pandas>=3.1.0",
     "pyarrow>=26.0.0",
     "pydantic>=2.14.1",
+    "pydantic-settings>=2.0",
     "scikit-learn>=1.9.1",
     "uvicorn>=0.54.0",
 ]
@@ -29,11 +27,21 @@ credit-default-risk = "credit_default_risk:main"
 requires = ["uv_build>=0.11.29,<0.12.0"]
 build-backend = "uv_build"
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "ipykernel>=7.4.0",
     "jupyterlab>=4.6.4",
+    "lightgbm>=4.7.0",
+    "matplotlib>=3.11.2",
+    "black>=25.9.0",
+    "optuna>=5.0.0",
     "pip>=26.2.2",
+    "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "ruff>=0.17.2",
+    "pytest-cov>=7.1.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=src/credit_default_risk --cov-fail-under=70"

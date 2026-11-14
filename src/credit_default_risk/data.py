@@ -3,6 +3,7 @@
 Run with ``python -m credit_default_risk.data`` from an installed environment.
 """
 
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -16,9 +17,9 @@ from .config import (
     RAW_DIR,
     RAW_FILES,
     TARGET_COL,
+    TEST_FILE,
     TEST_SIZE,
     TRAIN_FILE,
-    TEST_FILE
 )
 from .helper import (
     add_document_flag_sum,
@@ -30,6 +31,9 @@ from .helper import (
     fill_missing_history_counts,
     join_history_features,
 )
+from .logging_conf import configure_logging
+
+logger = logging.getLogger(__name__)
 
 
 def read_raw_table(name: str, raw_dir: Path = RAW_DIR) -> pd.DataFrame:
@@ -101,11 +105,35 @@ def save_train_test(
 
 
 def main() -> None:
+    configure_logging()
+    for name, filename in RAW_FILES.items():
+        logger.info("Input table: name=%s path=%s", name, RAW_DIR / filename)
     prepared = prepare_applications()
+    logger.info(
+        "Prepared applications: rows=%d default_rate=%.6f",
+        len(prepared),
+        prepared[TARGET_COL].mean(),
+    )
     train_df, test_df = split_train_test(prepared)
+    if len(train_df) + len(test_df) != len(prepared):
+        raise ValueError("Split row counts do not add up to prepared applications")
+    if train_df[ID_COL].isin(test_df[ID_COL]).any():
+        raise ValueError("Train and test splits contain overlapping application IDs")
+    logger.info("Split settings: test_size=%s random_state=%d", TEST_SIZE, RANDOM_STATE)
+    logger.info(
+        "Split rates: train_rows=%d train_default_rate=%.6f test_rows=%d test_default_rate=%.6f",
+        len(train_df),
+        train_df[TARGET_COL].mean(),
+        len(test_df),
+        test_df[TARGET_COL].mean(),
+    )
     train_path, test_path = save_train_test(train_df, test_df)
-    print(f"Train: {train_df.shape} -> {train_path}")
-    print(f"Test: {test_df.shape} -> {test_path}")
+    logger.info(
+        "Train split saved: rows=%d columns=%d path=%s", *train_df.shape, train_path
+    )
+    logger.info(
+        "Test split saved: rows=%d columns=%d path=%s", *test_df.shape, test_path
+    )
 
 
 if __name__ == "__main__":
