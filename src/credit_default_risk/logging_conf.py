@@ -2,15 +2,13 @@
 
 import json
 import logging
-import os
 import sys
 from contextvars import ContextVar, Token
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+from .config import settings
 
-_correlation_id: ContextVar[str | None] = ContextVar(
-    "correlation_id", default=None
-)
+_correlation_id: ContextVar[str | None] = ContextVar("correlation_id", default=None)
 
 
 def set_correlation_id(value: str) -> Token:
@@ -28,7 +26,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         payload = {
-            "timestamp": datetime.fromtimestamp(record.created, timezone.utc).isoformat(),
+            "timestamp": datetime.fromtimestamp(record.created, UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -41,7 +39,7 @@ class JsonFormatter(logging.Formatter):
 
 def configure_logging(level: str | None = None) -> None:
     """Install a single JSON handler on the root logger."""
-    chosen_level = (level or os.getenv("LOG_LEVEL", "INFO")).upper()
+    chosen_level = (level or settings.log_level).upper()
     if chosen_level not in logging.getLevelNamesMapping():
         raise ValueError(f"Invalid log level: {chosen_level}")
 

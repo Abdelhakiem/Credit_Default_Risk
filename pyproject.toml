@@ -15,6 +15,7 @@ dependencies = [
     "pandas>=3.1.0",
     "pyarrow>=26.0.0",
     "pydantic>=2.14.1",
+    "pydantic-settings>=2.0",
     "scikit-learn>=1.9.1",
     "uvicorn>=0.54.0",
 ]
@@ -32,8 +33,10 @@ dev = [
     "jupyterlab>=4.6.4",
     "lightgbm>=4.7.0",
     "matplotlib>=3.11.2",
+    "black>=25.9.0",
     "optuna>=5.0.0",
     "pip>=26.2.2",
+    "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "ruff>=0.17.2",
 ]

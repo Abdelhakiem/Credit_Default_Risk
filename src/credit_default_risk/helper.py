@@ -8,6 +8,8 @@ import pandas as pd
 from .config import (
     FINAL_SELECTED_COLUMNS,
     ID_COL,
+    MODEL_ALIAS,
+    MODEL_NAME,
     TARGET_COL,
     ZERO_WHEN_NO_HISTORY,
 )
@@ -15,8 +17,8 @@ from .config import (
 
 def load_registered_catboost(
     *,
-    model_name: str = "credit-default-risk-catboost",
-    alias: str = "champion",
+    model_name: str = MODEL_NAME,
+    alias: str = MODEL_ALIAS,
     tracking_uri: str | None = None,
 ):
     """Load a registered CatBoost version and its inference manifest.
@@ -37,14 +39,12 @@ def load_registered_catboost(
             "cannot locate its inference manifest."
         )
 
-    model = mlflow.catboost.load_model(
-        f"models:/{model_name}/{version.version}"
-    )
+    model = mlflow.catboost.load_model(f"models:/{model_name}/{version.version}")
     manifest = mlflow.artifacts.load_dict(
         f"runs:/{version.run_id}/inference/manifest.json"
     )
     if not isinstance(manifest.get("feature_columns"), list):
-        raise ValueError("Inference manifest has no feature_columns list")
+        raise TypeError("Inference manifest feature_columns must be a list")
 
     return model, manifest
 
@@ -75,6 +75,7 @@ def safe_divide(numerator, denominator):
     denominator = denominator.where(denominator > 0)
     return numerator.div(denominator).replace([np.inf, -np.inf], np.nan)
 
+
 def add_time_features(df):
     df = df.copy()
 
@@ -99,26 +100,24 @@ def add_time_features(df):
     )
 
     return df
+
+
 def add_application_ratios(df):
     df = df.copy()
 
-    df["CREDIT_TO_INCOME_RATIO"] = safe_divide(
-        df["AMT_CREDIT"], df["AMT_INCOME_TOTAL"]
-    )
+    df["CREDIT_TO_INCOME_RATIO"] = safe_divide(df["AMT_CREDIT"], df["AMT_INCOME_TOTAL"])
     df["ANNUITY_TO_INCOME_RATIO"] = safe_divide(
         df["AMT_ANNUITY"], df["AMT_INCOME_TOTAL"]
     )
-    df["GOODS_TO_CREDIT_RATIO"] = safe_divide(
-        df["AMT_GOODS_PRICE"], df["AMT_CREDIT"]
-    )
-    df["CREDIT_TO_ANNUITY_RATIO"] = safe_divide(
-        df["AMT_CREDIT"], df["AMT_ANNUITY"]
-    )
+    df["GOODS_TO_CREDIT_RATIO"] = safe_divide(df["AMT_GOODS_PRICE"], df["AMT_CREDIT"])
+    df["CREDIT_TO_ANNUITY_RATIO"] = safe_divide(df["AMT_CREDIT"], df["AMT_ANNUITY"])
     df["INCOME_PER_FAMILY_MEMBER"] = safe_divide(
         df["AMT_INCOME_TOTAL"], df["CNT_FAM_MEMBERS"]
     )
 
     return df
+
+
 def select_property_suffix(df, suffix="MEDI"):
     df = df.copy()
     property_suffixes = ("AVG", "MEDI", "MODE")
@@ -127,20 +126,15 @@ def select_property_suffix(df, suffix="MEDI"):
         col.rsplit("_", 1)[0]
         for col in df.columns
         if col.endswith(tuple(f"_{s}" for s in property_suffixes))
-        and all(
-            f"{col.rsplit('_', 1)[0]}_{s}" in df.columns
-            for s in property_suffixes
-        )
+        and all(f"{col.rsplit('_', 1)[0]}_{s}" in df.columns for s in property_suffixes)
     }
 
     drop_cols = [
-        f"{family}_{s}"
-        for family in families
-        for s in property_suffixes
-        if s != suffix
+        f"{family}_{s}" for family in families for s in property_suffixes if s != suffix
     ]
 
     return df.drop(columns=drop_cols)
+
 
 def _map_binary(series: pd.Series, mapping: dict[str, int], column: str) -> pd.Series:
     values = series.astype("string").str.strip().str.upper()
@@ -169,8 +163,7 @@ def add_document_flag_sum(
 ) -> pd.DataFrame:
     """Count document flags per row and remove the original flag columns."""
     document_columns = [
-        column for column in df.columns
-        if re.fullmatch(r"FLAG_DOCUMENT_\d+", column)
+        column for column in df.columns if re.fullmatch(r"FLAG_DOCUMENT_\d+", column)
     ]
     if not document_columns:
         raise ValueError("No FLAG_DOCUMENT_<number> columns found.")
@@ -196,7 +189,8 @@ def aggregate_bureau(df: pd.DataFrame) -> pd.DataFrame:
         .agg(
             BUREAU_NUM_CREDITS=("SK_ID_BUREAU", "nunique"),
             BUREAU_ACTIVE_CREDIT_COUNT=(
-                "CREDIT_ACTIVE", lambda values: values.eq("Active").sum()
+                "CREDIT_ACTIVE",
+                lambda values: values.eq("Active").sum(),
             ),
             BUREAU_MAX_DAYS_OVERDUE=("CREDIT_DAY_OVERDUE", "max"),
         )
@@ -207,20 +201,22 @@ def aggregate_bureau(df: pd.DataFrame) -> pd.DataFrame:
 def aggregate_previous_applications(df: pd.DataFrame) -> pd.DataFrame:
     """Summarize previous Home Credit applications by current application."""
     approved = df["NAME_CONTRACT_STATUS"].eq("Approved")
-    inputs = pd.DataFrame({
-        ID_COL: df[ID_COL],
-        "SK_ID_PREV": df["SK_ID_PREV"],
-        "IS_APPROVED": approved.astype("int8"),
-        "APPROVED_REQUESTED_SUM": df["AMT_APPLICATION"].where(approved, 0),
-        "APPROVED_GRANTED_SUM": df["AMT_CREDIT"].where(approved, 0),
-        "APPROVED_REQUESTED_MEAN": df["AMT_APPLICATION"].where(approved),
-        "APPROVED_GRANTED_MEAN": df["AMT_CREDIT"].where(approved),
-        "APPROVED_REQUESTED_TO_GRANTED_RATIO": (
-            df["AMT_APPLICATION"]
-            .div(df["AMT_CREDIT"].where(df["AMT_CREDIT"].gt(0)))
-            .where(approved)
-        ),
-    })
+    inputs = pd.DataFrame(
+        {
+            ID_COL: df[ID_COL],
+            "SK_ID_PREV": df["SK_ID_PREV"],
+            "IS_APPROVED": approved.astype("int8"),
+            "APPROVED_REQUESTED_SUM": df["AMT_APPLICATION"].where(approved, 0),
+            "APPROVED_GRANTED_SUM": df["AMT_CREDIT"].where(approved, 0),
+            "APPROVED_REQUESTED_MEAN": df["AMT_APPLICATION"].where(approved),
+            "APPROVED_GRANTED_MEAN": df["AMT_CREDIT"].where(approved),
+            "APPROVED_REQUESTED_TO_GRANTED_RATIO": (
+                df["AMT_APPLICATION"]
+                .div(df["AMT_CREDIT"].where(df["AMT_CREDIT"].gt(0)))
+                .where(approved)
+            ),
+        }
+    )
     features = (
         inputs.groupby(ID_COL)
         .agg(
@@ -231,7 +227,8 @@ def aggregate_previous_applications(df: pd.DataFrame) -> pd.DataFrame:
             PREV_APPROVED_REQUESTED_AMT_MEAN=("APPROVED_REQUESTED_MEAN", "mean"),
             PREV_APPROVED_GRANTED_AMT_MEAN=("APPROVED_GRANTED_MEAN", "mean"),
             PREV_APPROVED_REQUESTED_TO_GRANTED_RATIO_MEAN=(
-                "APPROVED_REQUESTED_TO_GRANTED_RATIO", "mean"
+                "APPROVED_REQUESTED_TO_GRANTED_RATIO",
+                "mean",
             ),
         )
         .reset_index()
@@ -247,11 +244,13 @@ def aggregate_credit_cards(df: pd.DataFrame) -> pd.DataFrame:
     positive_limit = df["AMT_CREDIT_LIMIT_ACTUAL"].where(
         df["AMT_CREDIT_LIMIT_ACTUAL"].gt(0)
     )
-    inputs = pd.DataFrame({
-        ID_COL: df[ID_COL],
-        "UTILIZATION": df["AMT_BALANCE"].div(positive_limit),
-        "BALANCE": df["AMT_BALANCE"],
-    })
+    inputs = pd.DataFrame(
+        {
+            ID_COL: df[ID_COL],
+            "UTILIZATION": df["AMT_BALANCE"].div(positive_limit),
+            "BALANCE": df["AMT_BALANCE"],
+        }
+    )
     return (
         inputs.groupby(ID_COL)
         .agg(
@@ -278,13 +277,17 @@ def aggregate_installments(df: pd.DataFrame) -> pd.DataFrame:
     installment_total = df["AMT_INSTALMENT"].groupby(ids).sum()
     payment_ratio = paid_total.div(installment_total.where(installment_total.ne(0)))
 
-    return pd.concat(
-        [
-            late_rate.rename("INSTALLMENT_LATE_PAYMENT_RATE"),
-            payment_ratio.rename("INSTALLMENT_PAYMENT_TO_DUE_RATIO"),
-        ],
-        axis=1,
-    ).rename_axis(ID_COL).reset_index()
+    return (
+        pd.concat(
+            [
+                late_rate.rename("INSTALLMENT_LATE_PAYMENT_RATE"),
+                payment_ratio.rename("INSTALLMENT_PAYMENT_TO_DUE_RATIO"),
+            ],
+            axis=1,
+        )
+        .rename_axis(ID_COL)
+        .reset_index()
+    )
 
 
 def join_history_features(

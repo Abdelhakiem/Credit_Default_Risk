@@ -4,17 +4,17 @@ Run with ``python -m credit_default_risk.features`` from an installed environmen
 Model-specific categorical preparation is available for individual frames.
 """
 
-from pathlib import Path
 import logging
 from collections.abc import Mapping
+from pathlib import Path
 
 import pandas as pd
 
 from .config import (
     ID_COL,
     INTERIM_DIR,
-    PROPERTY_SUFFIX,
     PROCESSED_DIR,
+    PROPERTY_SUFFIX,
     TARGET_COL,
     TEST_FILE,
     TRAIN_FILE,
@@ -27,12 +27,18 @@ from .helper import (
 )
 from .logging_conf import configure_logging
 
-
 logger = logging.getLogger(__name__)
-REQUIRED_SOURCE_COLUMNS = frozenset({
-    "DAYS_EMPLOYED", "DAYS_BIRTH", "AMT_CREDIT", "AMT_INCOME_TOTAL",
-    "AMT_ANNUITY", "AMT_GOODS_PRICE", "CNT_FAM_MEMBERS",
-})
+REQUIRED_SOURCE_COLUMNS = frozenset(
+    {
+        "DAYS_EMPLOYED",
+        "DAYS_BIRTH",
+        "AMT_CREDIT",
+        "AMT_INCOME_TOTAL",
+        "AMT_ANNUITY",
+        "AMT_GOODS_PRICE",
+        "CNT_FAM_MEMBERS",
+    }
+)
 
 
 def engineer_features(
@@ -75,20 +81,25 @@ def prepare_final_catboost_frame(
     """Select and prepare the exact features recorded with a trained model."""
     columns = manifest.get("feature_columns")
     categorical = manifest.get("categorical_columns")
-    if not isinstance(columns, list) or not columns or not all(
-        isinstance(column, str) for column in columns
-    ) or len(columns) != len(set(columns)):
+    if (
+        not isinstance(columns, list)
+        or not columns
+        or not all(isinstance(column, str) for column in columns)
+        or len(columns) != len(set(columns))
+    ):
         raise ValueError("Manifest must contain unique feature_columns")
-    if not isinstance(categorical, list) or not all(
-        isinstance(column, str) for column in categorical
-    ) or not set(categorical) <= set(columns):
+    if (
+        not isinstance(categorical, list)
+        or not all(isinstance(column, str) for column in categorical)
+        or not set(categorical) <= set(columns)
+    ):
         raise ValueError("Manifest has invalid categorical_columns")
 
     selected = select_final_features(df, selected_columns=columns)
     prepared = prepare_catboost_frame(selected)
-    actual_categorical = set(prepared.select_dtypes(
-        include=["object", "string", "category"]
-    ).columns)
+    actual_categorical = set(
+        prepared.select_dtypes(include=["object", "string", "category"]).columns
+    )
     if actual_categorical != set(categorical):
         raise ValueError("Prepared categorical columns differ from model manifest")
     return prepared
@@ -131,7 +142,8 @@ def build_feature_splits(
     if train_features.columns.tolist() != test_features.columns.tolist():
         raise ValueError("Train and test feature columns differ")
     mismatched = [
-        column for column in train_features.columns
+        column
+        for column in train_features.columns
         if train_features[column].dtype != test_features[column].dtype
     ]
     if mismatched:
@@ -161,8 +173,16 @@ def main(
     test_path = output_dir / TEST_FILE
     train_features.to_parquet(train_path, index=False)
     test_features.to_parquet(test_path, index=False)
-    logger.info("Train features saved: rows=%d columns=%d path=%s", *train_features.shape, train_path)
-    logger.info("Test features saved: rows=%d columns=%d path=%s", *test_features.shape, test_path)
+    logger.info(
+        "Train features saved: rows=%d columns=%d path=%s",
+        *train_features.shape,
+        train_path,
+    )
+    logger.info(
+        "Test features saved: rows=%d columns=%d path=%s",
+        *test_features.shape,
+        test_path,
+    )
     return train_path, test_path
 
 
