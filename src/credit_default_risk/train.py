@@ -30,6 +30,7 @@ from .config import (
     TEST_SIZE,
     WINNING_RUN_ID,
     MODEL_NAME,
+    MLFLOW_TRACKING_URI,
     ARTIFACT_DIR,
     DEFAULT_PARAMS
 )
@@ -78,7 +79,7 @@ def load_split(path: Path) -> pd.DataFrame:
 
 def main() -> tuple[str, str]:
     configure_logging()
-    tracking_uri = os.getenv("MLFLOW_TRACKING_URI") or "http://127.0.0.1:5000"
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI") or MLFLOW_TRACKING_URI
     mlflow.set_tracking_uri(tracking_uri)
     logger.info("MLflow tracking store: uri=%s", tracking_uri)
     experiment = mlflow.set_experiment("credit-default-risk")
