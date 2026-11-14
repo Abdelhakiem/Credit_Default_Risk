@@ -96,6 +96,14 @@ def prepare_final_catboost_frame(
         raise ValueError("Manifest has invalid categorical_columns")
 
     selected = select_final_features(df, selected_columns=columns)
+    for column in categorical:
+        selected[column] = (
+            selected[column].astype("string").fillna("__MISSING__").astype(object)
+        )
+    for column in set(columns) - set(categorical):
+        selected[column] = pd.to_numeric(selected[column], errors="raise").astype(
+            "float64"
+        )
     prepared = prepare_catboost_frame(selected)
     actual_categorical = set(
         prepared.select_dtypes(include=["object", "string", "category"]).columns

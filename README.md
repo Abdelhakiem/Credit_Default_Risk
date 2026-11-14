@@ -131,14 +131,24 @@ uv run --extra dev pre-commit run --all-files
 
 The installed pre-commit hook also runs Ruff, Black, and the end-of-file fixer on staged files at commit time. The first hook run may download its pinned tool environments.
 
-Full Running Commands: 
+Full Running Commands:
 
 ´´´
 
-pipinstall-e".[dev]"#install
+pip install-e".[dev]"#install
 ruffchecksrctests&&black--checksrctests#lint
 pytest-v--cov=src/prodml--cov-report=term-missing#test
 python-mprodml.train#train
 uvicornprodml.api.main:app--reload--port8000#serve
 
 ´´´
+
+```Shell
+uv run uvicorn credit_default_risk.api.main:app --reload --port 8000
+```
+
+
+
+```Shell
+uv run --extra dev pytest -q
+```
